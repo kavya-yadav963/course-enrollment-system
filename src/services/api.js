@@ -1,113 +1,75 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_URL = 'http://localhost:8080/api';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: API_URL,
 });
 
-export const register = (userData) => {
-  return api.post('/auth/register', userData);
-};
+// Interceptor to add the auth token to every secure request
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-export const login = (username, password, role) => {
-  return api.post('/auth/login', {
-    username,
-    password,
-    role
-  });
-};
-
-export const getAllStudents = () => {
-  return api.get('/student');
-};
+// --- Auth ---
+export const login = (credentials) => api.post('/auth/login', credentials);
+export const register = (role, userData) => api.post(`/auth/register/${role}`, userData);
 
 
-export const getStudents = getAllStudents;
+// --- Course Management (Admin) ---
+export const createCourse = (courseData) => api.post('/admin/courses', courseData);
+export const updateCourse = (id, courseData) => api.put(`/admin/courses/${id}`, courseData);
+export const deleteCourse = (id) => api.delete(`/admin/courses/${id}`);
 
-export const createStudent = (studentData) => {
-  return api.post('/student/create', studentData);
-};
+// --- General Course Access ---
+export const getAllCourses = () => api.get('/courses');
+export const getCourseById = (id) => api.get(`/courses/${id}`);
 
-// Add alias for components expecting 'addStudent'
-export const addStudent = createStudent;
+// --- Teacher Management (Admin) ---
+export const getAllTeachers = () => api.get('/teachers');
+// Note: User creation now goes through /auth/register
+// export const createTeacher = (teacherData) => api.post('/admin/teachers', teacherData);
+export const deleteTeacher = (id) => api.delete(`/admin/teachers/${id}`);
 
-export const getStudentById = (id) => {
-  return api.get(`/student/${id}`);
-};
+// --- Student Management (Admin) ---
+export const getAllStudents = () => api.get('/students');
+// Note: User creation now goes through /auth/register
+// export const createStudent = (studentData) => api.post('/admin/students', studentData);
+export const deleteStudent = (id) => api.delete(`/admin/students/${id}`);
 
-export const updateStudent = (id, studentData) => {
-  return api.put(`/student/${id}`, studentData);
-};
-
-export const deleteStudent = (id) => {
-  return api.delete(`/student/${id}`);
-};
-
-export const getAllCourses = () => {
-  return api.get('/courses');
-};
-
-export const getCourses = getAllCourses;
-
-export const createCourse = (courseData) => {
-  return api.post('/courses/create', courseData);
-};
-
-export const addCourse = createCourse;
-
-export const getCourseById = (id) => {
-  return api.get(`/courses/${id}`);
-};
-
-export const deleteCourse = (id) => {
-  return api.delete(`/courses/${id}`);
-};
-
-export const addStudentToCourse = (courseId, studentId) => {
-  return api.post(`/courses/${courseId}/students/${studentId}`);
-};
+// --- Enrollment Management ---
+export const adminAddStudentToCourse = (courseId, studentId) => api.put(`/admin/courses/${courseId}/addStudent/${studentId}`);
+export const adminRemoveStudentFromCourse = (courseId, studentId) => api.put(`/admin/courses/${courseId}/removeStudent/${studentId}`);
 
 
-export const enrollStudent = addStudentToCourse;
-
-export const removeStudentFromCourse = (courseId, studentId) => {
-  return api.delete(`/courses/${courseId}/students/${studentId}`);
-};
-
-export const unenrollStudent = removeStudentFromCourse;
-
-export const getAllTeachers = () => {
-  return api.get('/teachers');
-};
 
 
-export const getTeachers = getAllTeachers;
+// import axios from 'axios';
 
-export const createTeacher = (teacherData) => {
-  return api.post('/teachers/create', teacherData);
-};
+// const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
-export const addTeacher = createTeacher;
+// const api = axios.create({
+//   baseURL: API_URL,
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+// });
 
-export const getTeacherById = (id) => {
-  return api.get(`/teachers/${id}`);
-};
+// api.interceptors.request.use(
+//   (config) => {
+//     const token = localStorage.getItem('token');
+//     if (token) {
+//       config.headers.Authorization = `Bearer ${token}`;
+//     }
+//     return config;
+//   },
+//   (error) => {
+//     return Promise.reject(error);
+//   }
+// );
 
-export const updateTeacher = (id, teacherData) => {
-  return api.put(`/teachers/${id}`, teacherData);
-};
-
-export const deleteTeacher = (id) => {
-  return api.delete(`/teachers/${id}`);
-};
-
-export const assignTeacher = (teacherId, courseId) => {
-
-  return api.post(`/courses/${courseId}/teachers/${teacherId}`);
-};
-
-export default api;
+// export default api;
