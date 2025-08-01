@@ -1,69 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import LandingPage from './components/LandingPage';
-import LoginPage from './components/LoginPage';
-import RegisterPage from './components/RegisterPage';
-import Dashboard from './components/Dashboard';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 
+import LandingPage from './pages/LandingPage';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import AdminDashboard from './components/AdminDashboard';
+import TeacherDashboard from './components/TeacherDashboard';
+import StudentDashboard from './components/StudentDashboard';
+import Navbar from './components/Navbar';
+import ProtectedRoute from './utils/ProtectedRoute';
+
 function App() {
-  const [user, setUser] = useState(null);
-  const [view, setView] = useState('landing'); // 'landing', 'login', 'register', 'dashboard'
-  const [role, setRole] = useState(''); // 'admin', 'teacher', 'student'
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
-        setView('dashboard');
-      }
-    } catch (error) {
-        console.error('Could not parse user from localStorage', error);
-        localStorage.clear();
-    }
-    setLoading(false);
-  }, []);
-
-  const handleLoginSuccess = (userData) => {
-    const appUser = {
-      id: userData.userId,
-      name: userData.name,
-      role: userData.role.replace('ROLE_', ''), // Storing role as ADMIN, not ROLE_ADMIN
-      token: userData.token
-    };
-    localStorage.setItem('user', JSON.stringify(appUser));
-    localStorage.setItem('authToken', appUser.token);
-    setUser(appUser);
-    setView('dashboard');
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('authToken');
-    setUser(null);
-    setRole('');
-    setView('landing');
-  };
-
-  const renderContent = () => {
-    if (loading) {
-      return <div className="loading-container">Loading...</div>;
-    }
-
-    if (view === 'dashboard' && user) {
-      return <Dashboard user={user} onLogout={handleLogout} />;
-    }
-    if (view === 'login') {
-      return <LoginPage role={role} onLoginSuccess={handleLoginSuccess} setView={setView} />;
-    }
-    if (view === 'register') {
-      return <RegisterPage role={role} onLoginSuccess={handleLoginSuccess} setView={setView} />;
-    }
-    return <LandingPage setView={setView} setRole={setRole} />;
-  };
-
-  return <div className="app">{renderContent()}</div>;
+  return (
+    <Router>
+      <div className="app">
+        <Navbar />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login/:role" element={<Login />} />
+          <Route path="/register/:role" element={<Register />} />
+          
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          </Route>
+          <Route element={<ProtectedRoute allowedRoles={['TEACHER']} />}>
+             <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
+          </Route>
+           <Route element={<ProtectedRoute allowedRoles={['STUDENT']} />}>
+             <Route path="/student-dashboard" element={<StudentDashboard />} />
+          </Route>
+          
+          {/* Fallback Route */}
+          <Route path="*" element={<p>404 Not Found</p>} /> 
+        </Routes>
+      </div>
+    </Router>
+  );
 }
 
 export default App;
